@@ -5,6 +5,7 @@ package bmc
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -81,6 +82,11 @@ func NewRedfishBMCClient(
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to redfish endpoint: %w", err)
 	}
+
+	client.HTTPClient.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	bmc := &RedfishBMC{client: client}
 	if options.ResourcePollingInterval == 0 {
 		options.ResourcePollingInterval = DefaultResourcePollingInterval
