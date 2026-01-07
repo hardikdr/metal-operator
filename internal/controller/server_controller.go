@@ -439,12 +439,13 @@ func (r *ServerReconciler) handleReservedState(ctx context.Context, log logr.Log
 		return false, fmt.Errorf("failed to get ServerClaim: %w", err)
 	}
 
+	shouldConfigureNetworkBoot := shouldPXEBootServer(claim, server)
 	//TODO: handle working Reserved Server that was suddenly powered off but needs to boot from disk
-	if server.Status.PowerState == metalv1alpha1.ServerOffPowerState {
+	if shouldConfigureNetworkBoot {
 		if err := r.pxeBootServer(ctx, log, bmcClient, server); err != nil {
 			return false, fmt.Errorf("failed to boot server: %w", err)
 		}
-		log.V(1).Info("Server is powered off, booting Server in PXE")
+		log.V(1).Info("Server boot policy requires PXE boot configuration", "BootPolicy", claim.Spec.BootPolicy)
 	}
 	if err := r.ensureServerPowerState(ctx, log, bmcClient, server); err != nil {
 		return false, fmt.Errorf("failed to ensure server power state: %w", err)
@@ -789,6 +790,21 @@ func (r *ServerReconciler) pxeBootServer(ctx context.Context, log logr.Logger, b
 		return fmt.Errorf("failed to set PXE boot one for server: %w", err)
 	}
 	return nil
+}
+
+func shouldPXEBootServer(claim *metalv1alpha1.ServerClaim, server *metalv1alpha1.Server) bool {
+	if claim == nil || server == nil {
+		return false
+	}
+
+	switch claim.Spec.BootPolicy {
+	case "", metalv1alpha1.BootPolicyNetworkBootOnce:
+		return server.Status.PowerState == metalv1alpha1.ServerOffPowerState
+	case metalv1alpha1.BootPolicyNetworkBootAlways:
+		return true
+	default:
+		return false
+	}
 }
 
 func (r *ServerReconciler) extractServerDetailsFromRegistry(ctx context.Context, log logr.Logger, server *metalv1alpha1.Server) (bool, error) {

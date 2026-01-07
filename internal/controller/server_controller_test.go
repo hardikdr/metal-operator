@@ -795,6 +795,52 @@ var _ = Describe("Server Controller", func() {
 	})
 })
 
+var _ = Describe("shouldPXEBootServer", func() {
+	var claim *metalv1alpha1.ServerClaim
+	var server *metalv1alpha1.Server
+
+	BeforeEach(func() {
+		claim = &metalv1alpha1.ServerClaim{
+			Spec: metalv1alpha1.ServerClaimSpec{
+				BootPolicy: metalv1alpha1.BootPolicyNetworkBootOnce,
+			},
+		}
+		server = &metalv1alpha1.Server{
+			Status: metalv1alpha1.ServerStatus{
+				PowerState: metalv1alpha1.ServerOffPowerState,
+			},
+		}
+	})
+
+	It("returns true for NetworkBootAlways regardless of power state", func() {
+		claim.Spec.BootPolicy = metalv1alpha1.BootPolicyNetworkBootAlways
+		Expect(shouldPXEBootServer(claim, server)).To(BeTrue())
+
+		server.Status.PowerState = metalv1alpha1.ServerOnPowerState
+		Expect(shouldPXEBootServer(claim, server)).To(BeTrue())
+	})
+
+	It("returns true for NetworkBootOnce only when server is off", func() {
+		Expect(shouldPXEBootServer(claim, server)).To(BeTrue())
+
+		server.Status.PowerState = metalv1alpha1.ServerOnPowerState
+		Expect(shouldPXEBootServer(claim, server)).To(BeFalse())
+	})
+
+	It("treats an empty BootPolicy as NetworkBootOnce", func() {
+		claim.Spec.BootPolicy = ""
+		Expect(shouldPXEBootServer(claim, server)).To(BeTrue())
+
+		server.Status.PowerState = metalv1alpha1.ServerOnPowerState
+		Expect(shouldPXEBootServer(claim, server)).To(BeFalse())
+	})
+
+	It("returns false for BootPolicyNone", func() {
+		claim.Spec.BootPolicy = metalv1alpha1.BootPolicyNone
+		Expect(shouldPXEBootServer(claim, server)).To(BeFalse())
+	})
+})
+
 func deleteRegistrySystemIfExists(systemUUID string) {
 	response, err := http.Get(registryURL + "/systems/" + systemUUID)
 	if err != nil {

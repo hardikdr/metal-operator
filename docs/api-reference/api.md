@@ -992,6 +992,24 @@ _Appears in:_
 | `uid` _[UID](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#uid-types-pkg)_ | UID is the uid of the referenced object. |  |  |
 
 
+#### BootPolicy
+
+_Underlying type:_ _string_
+
+BootPolicy defines the boot behavior for a server claimed by a ServerClaim.
+
+
+
+_Appears in:_
+- [ServerClaimSpec](#serverclaimspec)
+
+| Field | Description |
+| --- | --- |
+| `None` | BootPolicyNone indicates that no network boot should be configured when reconciling the server claim.<br /> |
+| `NetworkBootOnce` | BootPolicyNetworkBootOnce configures the server to boot from the network once on the next power cycle.<br /> |
+| `NetworkBootAlways` | BootPolicyNetworkBootAlways configures the server to set PXE boot on every reconciliation.<br /> |
+
+
 #### Phase
 
 _Underlying type:_ _string_
@@ -1247,6 +1265,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `bootPolicy` _[BootPolicy](#bootpolicy)_ | BootPolicy specifies how the server should be configured to boot from the network. | NetworkBootOnce | Enum: None, NetworkBootOnce, NetworkBootAlways <br /> |
 | `power` _[Power](#power)_ | Power specifies the desired power state of the server. |  |  |
 | `serverRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core)_ | ServerRef is a reference to a specific server to be claimed.<br />This field is optional and can be omitted if the server is to be selected using ServerSelector. |  | Optional: \{\} <br /> |
 | `serverSelector` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#labelselector-v1-meta)_ | ServerSelector specifies a label selector to identify the server to be claimed.<br />This field is optional and can be omitted if a specific server is referenced using ServerRef. |  | Optional: \{\} <br /> |
@@ -1616,5 +1635,3 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `Force` |  |
-
-
